@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fetch protein and compute sites</title>
+  <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+      <![endif]-->
+
+
+
+    <!-- Custom styles for this template -->
+    <link href="/static/bootstrap/css/cover.css" rel="stylesheet">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+      <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+
+<script type=text/javascript>
+  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+  $(function() {
+    $('a#calculate').bind('click', function() {
+      $.getJSON($SCRIPT_ROOT + '/_add_numbers', {
+        a: $('input[name="a"]').val(),
+        b: $('input[name="b"]').val()
+      }, function(data) {
+        $("#result").text(data.result);
+      });
+      return false;
+    });
+  });
+</script>
+<h1>jQuery Example</h1>
+<p><input type=text size=5 name=a> +
+   <input type=text size=5 name=b> =
+   <span id=result>?</span>
+<p><a href=# id=calculate>calculate server side</a>
+
+
+    </body>
+    </html>

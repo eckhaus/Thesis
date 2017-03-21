@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Fetch protein and compute sites</title>
+	<link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+      <![endif]-->
+      <!-- Custom styles for this template -->
+      <link href="/static/bootstrap/css/cover.css" rel="stylesheet">
+      <style type="text/css">
+      	.list {
+      		margin: 20px;
+      		font-size: 14pt;
+      	}
+      </style>
+
+
+      <style>
+      	.viewer_wrapper {
+      		font-family: Helvetica;
+      		background-color: #f0f0f0;
+      		font-weight: lighter;
+      		margin: 0px;
+      		width:100%;
+      		height:100%;
+      		overflow-y:scroll;
+
+      	}
+      	.viewer_wrapper {
+      		position: relative;
+      		color:#333;
+      		text-shadow: none;
+      	}
+      	#gl {
+      		position:relative;
+      		bottom:0px;
+      		top:0px;
+      		left:0px;
+      		right:0px;
+      		height: 100vh;
+      		overflow: hidden;
+      	}
+
+      	#inspector {
+      		position:absolute;
+      		  top: 50%;
+  -webkit-transform: translate(0,-50%);
+      -ms-transform: translate(0,-50%);
+          transform: translate(0,-50%);
+
+
+      		left:50px;
+  			height: auto;
+      		box-shadow: 2px 2px 5px #888888;
+      		border-radius:8px;
+      		
+      		background-color:#fafafa;
+      		padding:10px;
+      		border-style:solid;
+      		border-width:1px;
+      		border-color:#ccc;
+      	}
+
+      	#inspector ul {
+      		padding:0px;
+      	}
+
+      	#inspector ul li {
+      		margin-left:5px;
+      		margin-right:5px;
+      		margin-bottom:5px;
+      		list-style:none;
+      		cursor: pointer;
+      		color:#393
+      	}
+
+      	#inspector ul li:hover {
+      		color:#994444;
+      	}
+      	#inspector h1 {
+      		font-weight:normal;
+      		font-size:12pt;
+      	}
+
+      	#status {
+      		position: fixed;
+      		bottom: 20px;
+      		left: 20px;
+      	}
+
+
+      </style>
+
+
+
+
+  </head>
+  <body>
+
+	<div class="masthead clearfix" style="z-index: 1009;">
+		<div class="inner">
+			<h3 class="masthead-brand">LBS Explorer</h3>
+			<nav>
+				<ul class="nav masthead-nav">
+					<li class="active" id = "add_new_struct"><a href="#">[Add New]</a></li>
+					<li id = "download_structures"><a href="#" >[Downloaded]</a></li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+
+  	<div class="site-wrapper">
+  		<div class="site-wrapper-inner">
+  			<div class="cover-container">
+  				<div class="inner cover"  id = "search">
+  					<h1 class="cover-heading">Download new PDB.</h1>
+  					<p class="lead">Download from PDB and display LigsiteCS binding sites.</p>
+  					<p class="lead">
+  						<!--<a href="#" class="btn btn-lg btn-default">Learn more</a>-->
+  						<form name="myForm" action="{{ url_for('handleRequest') }}" method="POST">
+  							<div class="input-group">
+  								<input type="text" class="form-control"  name="id" placeholder="Show binding sites for PDB ID...">
+  								<span class="input-group-btn">
+  									<button class="btn btn-default" type=submit>Go!</button>
+  								</span>
+  							</div><!-- /input-group -->
+  						</form>             
+  					</div>
+
+  					<div> <div id="result" class="text-center" style="display: none; vertical-align: baseline;">  </div>
+
+  					<!--<div class="mastfoot">
+  						<div class="inner">
+  							<p><a href="eckhaus.github.io/lbs/">LBS explorer</a>, bachelor's thesis by <a href="https://twitter.com/mdo">Robert Eckhaus</a>, 2017.</p>
+  						</div>
+  					</div>-->
+  				</div>
+  			</div>
+  		</div>
+  	</div>
+
+  	<div class = "viewer_wrapper">
+  		<div id="gl">
+  			<div id="inspector">
+  				<h1>Ligsite</h1>
+  				<ul>
+  					<li id="view_prot">View examined protein</li>
+  					<li id="view_best">View 3 best LBS's</li>
+  					<li id="view_clusters">View all clusters LBS's</li>
+  					<li id="view_all">View all candidate grid points</li>
+  				</ul>
+
+  				<h1>PASS</h1>
+  				<ul>
+  					<li id="view_PASS_asps">ASPS</li>
+  					<li id="view_PASS_lig1">Lig1</li>
+  					<li id="view_PASS_lig2">Lig2</li>
+  					<li id="view_PASS_lig3">Lig3</li>
+  					<li id="view_PASS_probes">Probes</li>
+  				</ul>
+  				
+  			</div>
+  		</div>
+  		<div id="status"></div>
+  	</div>
+
+
+  	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  	<script src="/static/bootstrap/js/bootstrap.min.js"></script>
+
+  	<script type=text/javascript>
+  		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+  		$(function() {
+  			$('.nav li').bind('click', function() {
+  				if ($(this).hasClass("active")){
+  					return false;
+  				}
+  				else{
+  					$("nav li").removeClass("active");
+        			$(this).addClass("active");
+        			
+  				}
+  				if ($(window).scrollTop()!=0){
+  					$('html, body').animate({scrollTop: 0}, 500, function(){$(".viewer_wrapper").hide();});
+  				}
+  				else
+  					$(".viewer_wrapper").hide();
+
+  				$("body").css("overflow-y", "visible");
+  				$.getJSON($SCRIPT_ROOT + '/_get_downloaded', {
+            //a: $('input[name="a"]').val(),
+            //b: $('input[name="b"]').val()
+        }, function(data) {     
+        	if($("#add_new_struct").hasClass("active"))        
+        		$( "#search" ).show( "fast", function(){} );            
+        	else
+        		$( "#search" ).hide( "fast", function(){} );       
+        	$( '#result' ).html( '<div class="padder" style="height:'+ $('.masthead').height() +'px;"></div>');
+        	$( '#result' ).append( '<br><h3> Downloaded structures </h3>');
+        	$( '#result' ).append( '<ul class="list-group">');                          
+        	$.each(data.result, function(i) {
+        		//$( "#result" ).append('<a class="pdb_down_link" href = "/' + this +'" class="list-group-item list-group-item-action">' +this + '</a>');
+        		$( "#result" ).append('<a href="#" onclick="return false;" class="list-group-item list-group-item-action pdb_down_link">' +this + '</a>');
+        	});    
+        	$( '#result' ).append( '</ul>');            
+
+			if($("#add_new_struct").hasClass("active"))        
+        		$( "#result" ).hide( "fast", function(){} );            
+        	else
+        		$( "#result" ).show( "fast", function(){} );    
+        });
+  				return false;
+  			});
+  		});
+  	</script>
+
+  	<script src="/static/pv.min.js"></script>
+  	<script>
+
+  		var settings = { 
+  			quality : 'high', 
+  			width: 'auto', 
+  			height : 'auto',
+  			antialias : true, 
+  			outline : false,
+  			background: '#f0f0f0'
+  		};
+  		var parent = document.getElementById('gl');
+  		var viewer = pv.Viewer(parent, settings);	
+  		var structure
+
+  		//var PName = '{{name}}';
+  		var PName;
+  		var info = {
+  			dataTypes : {					
+  				protein : {
+  					id: 'protein',
+  					fileName: '',
+  					displayMode: 'ballsAndSticks',
+  					visible: false
+  				},
+
+  				all : {
+  					id: 'all',
+  					fileName: '_all',
+  					displayMode: 'spheres',
+  					visible: false
+  				},
+
+  				clusters : {
+  					id: 'clusters',
+  					fileName: '_clusters',
+  					displayMode: 'spheres',
+  					visible: false
+  				},
+
+  				best : {
+  					id: 'best',
+  					fileName: '_best',
+  					displayMode: 'spheres',
+  					visible: false
+  				},
+
+				// PASS
+
+				ASPS : {
+					id: 'ASPS',
+					fileName: '_asps',
+					displayMode: 'spheres',
+					visible: false
+				},
+
+				Lig1 : {
+					id: 'Lig1',
+					fileName: '_lig1',
+					displayMode: 'spheres',
+					visible: false
+				},
+
+				Lig2 : {
+					id: 'Lig2',
+					fileName: '_lig2',
+					displayMode: 'spheres',
+					visible: false
+				},
+
+				Lig3 : {
+					id: 'Lig3',
+					fileName: '_lig3',
+					displayMode: 'spheres',
+					visible: false
+				},
+
+				Probes : {
+					id: 'Probes',
+					fileName: '_probes',
+					displayMode: 'spheres',
+					visible: false
+				}
+			},
+
+			behaviors : {
+				toggle : function(dataType) {
+					if (dataType.visible)
+						viewer.rm(dataType.id);
+					else  {						
+						viewer.renderAs(dataType.id, structure, dataType.displayMode);
+					}
+					viewer.forEach(function(atom) {atom.setOpacity(0.9);});
+						//viewer.get('protein').setOpacity(1.0);
+						viewer.requestRedraw();
+						dataType.visible = !dataType.visible;
+					},
+
+					override : function(dataType) {
+						viewer.rm("*");
+						viewer.clear();
+						viewer.renderAs(dataType.id, structure, dataType.displayMode); 					
+					}
+				}
+			};   	
+
+			function load(dataType, finalizer, behavior = 'toggle') {
+				document.getElementById('status').innerHTML ='loading '+PName+info.dataTypes[dataType].fileName;
+				var xhr = new XMLHttpRequest();
+				xhr.open('GET', '/static/pdbs/'+PName+info.dataTypes[dataType].fileName+'.pdb');
+				xhr.setRequestHeader('Content-type', 'application/x-pdb');
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState == 4) {
+						structure = pv.io.pdb(xhr.responseText);     						
+						info.behaviors[behavior](info.dataTypes[dataType]);
+						if (typeof finalizer !== 'undefined')
+							finalizer();
+					}
+					document.getElementById('status').innerHTML = '';
+				}
+				xhr.send();
+			};
+
+			document.getElementById('view_prot').onclick = function(){load('protein');};
+			document.getElementById('view_best').onclick = function(){load('best');};
+			document.getElementById('view_clusters').onclick = function(){load('clusters');};
+			document.getElementById('view_all').onclick = function(){load('all');};
+
+
+			document.getElementById('view_PASS_asps').onclick = function(){load('ASPS');};
+			document.getElementById('view_PASS_lig1').onclick = function(){load('Lig1');};
+			document.getElementById('view_PASS_lig2').onclick = function(){load('Lig2');};
+			document.getElementById('view_PASS_lig3').onclick = function(){load('Lig3');};
+			document.getElementById('view_PASS_probes').onclick = function(){load('Probes');};
+
+			window.onresize = function(event) {
+				viewer.fitParent();
+			};
+
+			function init (protein) {
+				PName = protein;
+				info.dataTypes.protein.visible = false;
+				
+				viewer.clear();
+				load('protein', function(){
+					viewer.centerOn(structure);
+					viewer.autoZoom();
+					viewer.requestRedraw();
+					$("body").css("overflow-y", "hidden");
+					$('html, body').delay( 200 ).animate({scrollTop: $(".viewer_wrapper").offset().top}, 500);
+				});
+				
+			};
+
+			document.addEventListener('DOMContentLoaded',  function(){
+				$(".viewer_wrapper").hide();//init('1eyz');	
+			});
+			
+			$(document).on('click', '.pdb_down_link', function() { 		
+				$(".viewer_wrapper").show();		
+				init($(this).text()); 
+			    $("nav li").removeClass("active");
+			});
+
+  			
+		</script>
+
+
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/trianglify/0.4.0/trianglify.min.js"></script>
+		<script>
+		// background experiment
+			var pattern = Trianglify({
+				width: window.innerWidth,
+				height: window.innerHeight,
+				x_colors: "YlGn"
+
+			});
+
+			 var png = document.createElement('img')
+		  		$("body").css("background-image", "url('" + pattern.png() + "')");
+
+		</script>
+
+	</body>
+	</html>
