@@ -153,8 +153,8 @@ class Ligsite (PredictionAlgorithm):
         PredictionAlgorithm.__init__(self, pdbLoader, outputFolder)
 
     def run_one(self, structure):
-        os.system("export BALL=/home/eckhaus/thesis/lib/BALL-1.1.1")
-        os.system("export LD_LIBRARY_PATH=~/thesis/lib")
+        # os.system("export BALL=/home/eckhaus/thesis/lib/BALL-1.1.1")
+        os.system("export LD_LIBRARY_PATH=~/thesis/algo")
         PredictionAlgorithm.run_one(self, structure)
 
         # cleanup
@@ -163,10 +163,10 @@ class Ligsite (PredictionAlgorithm):
         except:
             pass
 
-            os.rename("pocket.pdb", self.outputFolder + "/" + structure.pdbID + "_best.pdb")
-            os.rename("pocket_all.pdb", self.outputFolder + "/" + structure.pdbID + "_clusters.pdb")
-            os.rename("pocket_r.pdb", self.outputFolder + "/" + structure.pdbID + "_all.pdb")
-            os.remove("pocket.py")
+        os.rename("pocket.pdb", self.outputFolder + "/" + structure.pdbID + "_best.pdb")
+        os.rename("pocket_all.pdb", self.outputFolder + "/" + structure.pdbID + "_clusters.pdb")
+        os.rename("pocket_r.pdb", self.outputFolder + "/" + structure.pdbID + "_all.pdb")
+        os.remove("pocket.py")
 
 
 def tryMove(fro, to):
@@ -263,17 +263,17 @@ def testStatic():
 
 
 if __name__ == "__main__":
-    #loader = PDBLoader("static/pdbs")
-    #Ligsite(loader, "static/test").run_one(loader[0])
+    loader = PDBLoader("static/pdbs")
+    Ligsite(loader, "static/test").run_one(loader[0])
 
-    import requests
-    url = "http://0.0.0.0:7000/1eyz"
-    r = requests.get(url)
-    #print r.content
+#    import requests
+#    url = "http://0.0.0.0:7000/1eyz"
+#    r = requests.get(url)
+#    print r.content
 
-    f = open("test.pdb", "w")
-    f.write(r.content)
-    f.close()
+#    f = open("test.txt", "w")
+#    f.write(r.raw)
+#    f.close()
 
 
 
