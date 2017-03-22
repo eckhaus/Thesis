@@ -7,17 +7,17 @@ branch-defaults:
 environment-defaults:
   bio-env:
     branch: null
-    repository: aws
+    repository: thesis
 global:
   application_name: lbd-explorer
   branch: null
   default_ec2_keyname: aws-eb
-  default_platform: python2.7
+  default_platform: Python 2.7
   default_region: us-west-2
   instance_profile: null
   platform_name: null
   platform_version: null
   profile: eb-cli
-  repository: null
+  repository: github2
   sc: git
   workspace_type: Application

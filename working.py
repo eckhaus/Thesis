@@ -33,12 +33,14 @@ class PDBDownloader:
         """
         pdbList = PDB.PDBList()
         failedDownloadsLogFile = self.downloadDirectory + "/failedLog"
-
-        if not overrideAll and os.path.isfile(failedDownloadsLogFile):
+        if not os.path.exists(self.downloadDirectory):
+            os.makedirs(self.downloadDirectory)
+        if not overrideAll and os.path.exists(failedDownloadsLogFile):
             failedLog = open(failedDownloadsLogFile, 'r')
             try:
                 self.downloadFailed = self.downloadFailed.union(json.load(failedLog))
             except:
+
                 print "no FailLog detected"
                 pass
             failedLog.close()
@@ -57,10 +59,12 @@ class PDBDownloader:
             except IOError:
                 self.downloadFailed.add(pdbID)
                 print "Failed to download", pdbID
-
-        failedLog = open(failedDownloadsLogFile, 'w')
-        failedLog.write(json.dumps(list(self.downloadFailed)))
-
+        # TODO: napisat normalny manager
+        try:
+            failedLog = open(failedDownloadsLogFile, 'w')
+            failedLog.write(json.dumps(list(self.downloadFailed)))
+        except:
+            pass
 
 class PDBLoader:
     directory = ""
@@ -145,11 +149,12 @@ class Ligsite (PredictionAlgorithm):
     pdbParser = PDB.PDBParser(PERMISSIVE=1)
 
     def __init__(self, pdbLoader, outputFolder):
-        self.executionString = "./algo/lcs -i %s"
+        self.executionString = "~/thesis/algo/lcs -i %s"
         PredictionAlgorithm.__init__(self, pdbLoader, outputFolder)
 
     def run_one(self, structure):
-        os.environ['LD_LIBRARY_PATH'] = './algo'
+        os.system("export BALL=/home/eckhaus/thesis/lib/BALL-1.1.1")
+        os.system("export LD_LIBRARY_PATH=~/thesis/lib")
         PredictionAlgorithm.run_one(self, structure)
 
         # cleanup
@@ -250,3 +255,25 @@ def add():
 @app.route('/_get_downloaded')
 def getDownloaded():
     return jsonify(result=list(PDBLoader(directory="static/pdbs").getPDBIDs()))
+
+
+@app.route('/test_file')
+def testStatic():
+    return app.send_static_file("pdbs/1eyz.pdb")
+
+
+if __name__ == "__main__":
+    #loader = PDBLoader("static/pdbs")
+    #Ligsite(loader, "static/test").run_one(loader[0])
+
+    import requests
+    url = "http://0.0.0.0:7000/1eyz"
+    r = requests.get(url)
+    #print r.content
+
+    f = open("test.pdb", "w")
+    f.write(r.content)
+    f.close()
+
+
+
