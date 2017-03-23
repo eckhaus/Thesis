@@ -325,7 +325,7 @@
 				}
 			};   	
 
-			function load(dataType, finalizer, behavior = 'toggle') {
+			function load(dataType, finalizer, behavior='toggle') {
 				document.getElementById('status').innerHTML ='loading '+PName+info.dataTypes[dataType].fileName;
 				var xhr = new XMLHttpRequest();
 				xhr.open('GET', '/static/pdbs/'+PName+info.dataTypes[dataType].fileName+'.pdb');

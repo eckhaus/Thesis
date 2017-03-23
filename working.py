@@ -114,7 +114,6 @@ class ProteinStructure:
         self.pdbParser.get_structure(self.pdbID, self.fileName)
 
 
-
 class PredictionAlgorithm:
     pdbParser = PDB.PDBParser(PERMISSIVE=1)
 
